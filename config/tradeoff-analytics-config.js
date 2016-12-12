@@ -20,7 +20,7 @@ var watson = require('watson-developer-cloud'),
     extend = require('util')._extend;
 
 var defaultConnectionDetails = {
-    url: 'https://gateway.watsonplatform.net/tradeoff-analytics/api/v1',
+    url: 'https://gateway.watsonplatform.net/tradeoff-analytics/api',
     version: 'v1'
 };
 
