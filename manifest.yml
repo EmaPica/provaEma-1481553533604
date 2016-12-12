@@ -9,6 +9,7 @@ applications:
   name: tradeoff-analytics-demo
   command: npm start
   path: .
+  memory: 256M
   
 
 
