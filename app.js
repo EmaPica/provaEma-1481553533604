@@ -1,31 +1,121 @@
-/*eslint-env node*/
+/**
+ * Copyright 2015 IBM Corp. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
-//------------------------------------------------------------------------------
-// node.js starter application for Bluemix
-//------------------------------------------------------------------------------
-
-// This application uses express as its web server
-// for more info, see: http://expressjs.com
 'use strict';
 
-var express = require('express'),
-    tradeoffAnalyticsConfig = require('./tradeoff-analytics-config');
+// load environment properties from a .env file for local development
+require('dotenv').load({silent: true});
 
-var app = express();
-app.use('/',express.static(__dirname + '/public'));
+var express    = require('express'),
+  app          = express();
+// Bootstrap application settings
+require('./config/express')(app);
 
-// For local development, copy your service instance credentials here, otherwise you may ommit this parameter
-var serviceCredentials = {
-  username: '7dbd5992-0b16-4ffe-968b-9274b1cf03d3',
-  password: 'KTbrEfGRdthk'
+//integration with tradeoff analytics service
+var tradeoffAnalyticsConfig = require('./config/tradeoff-analytics-config');
+
+tradeoffAnalyticsConfig.setupToken(app, {//for dev purposes. in bluemix it is taken from VCAP.
+  url: process.env.TA_URL || 'https://gateway.watsonplatform.net/tradeoff-analytics/api/v1',
+  username: process.env.TA_USERNAME || 'USERNAME',
+  password: process.env.TA_PASSWORD || 'PASSWORD',
+  version: 'v1'
+});
+
+app.get('/', function(req, res) {
+  res.render('index', {
+    ct: req._csrfToken,
+    GOOGLE_ANALYTICS_ID: process.env.GOOGLE_ANALYTICS_ID
+  });
+});
+app.get('/refresh', function(req, res) {
+  refreshData();
+  res.writeHead(200);
+  res.end();
+});
+app.get('/last_refresh', function(req, res) {
+  lastRefresh(function(time){
+    res.writeHead(200, { 'Content-Type': 'text/plain'});
+    res.write(time.toJSON());
+    res.end();
+  });
+});
+
+var FILE_RAW = 'config/edmunds/cars_raw.json';
+var FILE_PROBLEM = './public/data/auto.json';
+var edmunds = require('./config/edmunds/Edmunds');
+var fs = require('fs');
+
+var SECOND = 1000,
+  MINUTE= 60*SECOND,
+  HOUR = 60*MINUTE;
+var MAX_TIME_BETWEEN_IMPORTS = 24*HOUR;
+var TIME_BETWEEN_CHECKS = 1*HOUR;
+
+var refreshing= false;
+
+function checkForRefresh(){
+  lastRefresh(function(lastImportTime){
+    var duration = (new Date() - lastImportTime);
+    if(duration>MAX_TIME_BETWEEN_IMPORTS && !refreshing){
+      refreshData();
+    }
+  });
 }
-// When running on Bluemix, serviceCredentials will be overriden by the credentials obtained from VCAP_SERVICES
-tradeoffAnalyticsConfig.setupToken(app, serviceCredentials); 
+function refreshData(){
+  if(refreshing){
+    return;
+  }
+  var startTime = Date.now();
+  refreshing = true;
+  function onFailure(err){
+    console.log('import failed. \n'+ err);
+    refreshing = false;
+  }
+  try{
+    edmunds.importEdmunds(function(data){// brings the data from RAW file instead from API
+      fs.writeFile(FILE_RAW, JSON.stringify(data,  null, 2));
+//      var data= JSON.parse(fs.readFileSync(FILE_RAW));
 
-// to communicate with the service using a proxy rather then a token, add a dependency on "body-parser": "^1.15.0" 
-// to package.json, and use:
-// tradeoffAnalyticsConfig.setupProxy(app, serviceCredentials);
+      edmunds.mapEdmunds(data, function(problem){
+        fs.writeFile(FILE_PROBLEM, JSON.stringify(problem,  null, 2));
+        refreshing = false;
 
-var port = process.env.VCAP_APP_PORT || 2000;
-app.listen(port);
-console.log('listening at:', port);
+        var duration  = (Date.now() - startTime),
+          m= Math.floor(duration/MINUTE),
+          s= Math.floor((duration-m*MINUTE)/SECOND);
+        console.log("Duration: "+m+"M:"+s+"s");
+      });
+    }, onFailure);
+  }catch(e){
+    onFailure(e);
+  }
+    //the server will retry in the next check interval;
+}
+setInterval(checkForRefresh, TIME_BETWEEN_CHECKS);
+
+function lastRefresh(callback){
+  fs.stat(FILE_PROBLEM, function(err, stats){
+    if(stats){//file exist
+      callback(new Date(stats.mtime));
+    }else{
+      callback(new Date(0));
+    }
+  });
+}
+checkForRefresh();
+
+
+module.exports = app;
