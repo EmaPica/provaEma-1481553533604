@@ -16,7 +16,7 @@
 
 'use strict';
 (function(){
-  var dilemmaServiceUrl = "https://gateway.watsonplatform.net/tradeoff-analytics/api/v1/dilemmas?generate_visualization=false";
+  var dilemmaServiceUrl = "https://gateway.watsonplatform.net/tradeoff-analytics/api/dilemmas?generate_visualization=false";
 
   /**
    * @typedef ColumnData
