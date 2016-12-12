@@ -6,23 +6,26 @@
 
 // This application uses express as its web server
 // for more info, see: http://expressjs.com
-var express = require('express');
+'use strict';
 
-// cfenv provides access to your Cloud Foundry environment
-// for more info, see: https://www.npmjs.com/package/cfenv
-var cfenv = require('cfenv');
+var express = require('express'),
+    tradeoffAnalyticsConfig = require('./tradeoff-analytics-config');
 
-// create a new express server
 var app = express();
+app.use('/',express.static(__dirname + '/public'));
 
-// serve the files out of ./public as our main files
-app.use(express.static(__dirname + '/public'));
+// For local development, copy your service instance credentials here, otherwise you may ommit this parameter
+var serviceCredentials = {
+  username: '<username>',
+  password: '<password>'
+}
+// When running on Bluemix, serviceCredentials will be overriden by the credentials obtained from VCAP_SERVICES
+tradeoffAnalyticsConfig.setupToken(app, serviceCredentials); 
 
-// get the app environment from Cloud Foundry
-var appEnv = cfenv.getAppEnv();
+// to communicate with the service using a proxy rather then a token, add a dependency on "body-parser": "^1.15.0" 
+// to package.json, and use:
+// tradeoffAnalyticsConfig.setupProxy(app, serviceCredentials);
 
-// start server on the specified port and binding host
-app.listen(appEnv.port, '0.0.0.0', function() {
-  // print a message when the server starts listening
-  console.log("server starting on " + appEnv.url);
-});
+var port = process.env.VCAP_APP_PORT || 2000;
+app.listen(port);
+console.log('listening at:', port);
