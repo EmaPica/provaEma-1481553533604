@@ -1,20 +1,44 @@
 {
-	"name": "NodejsStarterApp",
-	"version": "0.0.1",
-	"private": true,
-	"scripts": {
-		"start": "node app.js"
-	},
-	"dependencies": {
-		"express": "4.13.x",
-		"cfenv": "1.0.x",
-		"watson-developer-cloud": "^1.3.0"
-	},
-	 "engines": {
-    "node": ">=0.10.38"
+  "name": "tradeoff-analytics-demo",
+  "version": "2.0.1",
+  "description": "A sample nodejs app for Bluemix that use the Tradeoff Analytics service",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/watson-developer-cloud/tradeoff-analytics-nodejs.git"
   },
-	"repository": {},
-	"engines": {
-		"node": "4.x"
-	} 
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/watson-developer-cloud/tradeoff-analytics-nodejs/issues"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "test": "npm run lint && npm run test-integration",
+    "lint": "eslint .",
+    "autofix": "eslint --fix .",
+    "test-integration": "istanbul cover ./node_modules/mocha/bin/_mocha",
+    "codecov": "npm run test && (codecov || true)"
+  },
+  "dependencies": {
+    "body-parser": "^1.13.2",
+    "cf-deployment-tracker-client": "0.1.1",
+    "cookie-parser": "^1.4.1",
+    "csurf": "^1.8.3",
+    "dotenv": "^2.0.0",
+    "ejs": "^2.3.4",
+    "express": "^4.12.2",
+    "express-rate-limit": "^2.1.2",
+    "express-secure-only": "^0.2.1",
+    "helmet": "^2.1.1",
+    "log4js": "^0.6.33",
+    "request": "^2.69.0",
+    "underscore": "1.8.3",
+    "watson-developer-cloud": "^2.2.0"
+  },
+  "devDependencies": {
+    "codecov": "^1.0.1",
+    "eslint": "^3.4.0",
+    "istanbul": "^0.4.2",
+    "mocha": "^3.0.2",
+    "supertest": "^2.0.0"
+  }
 }
