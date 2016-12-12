@@ -120,4 +120,5 @@ function getServiceCreds(name) {
       }
     }
     return {};
+ }; 
 }; 
