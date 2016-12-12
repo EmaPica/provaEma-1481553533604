@@ -1,3 +1,7 @@
+  declared-services:
+  tradeoff-analytics-standard-service:
+    label: tradeoff_analytics
+    plan: standard
 applications:
 - path: .
   memory: 256M
@@ -8,3 +12,7 @@ applications:
   disk_quota: 1024M
   services:
   - Tradeoff Analytics-he
+  
+  
+
+
