@@ -7,8 +7,12 @@
 	},
 	"dependencies": {
 		"express": "4.13.x",
-		"cfenv": "1.0.x"
+		"cfenv": "1.0.x",
+		"watson-developer-cloud": "^1.3.0"
 	},
+	 "engines": {
+    "node": ">=0.10.38"
+  },
 	"repository": {},
 	"engines": {
 		"node": "4.x"
